@@ -3,23 +3,23 @@ import joblib
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-# 1. Cargar el Modelo Entrenado
+# 1. Load the Trained Model
 model_filename = "bank_pipeline.pkl"
 
 try:
-    # Cargamos el "cerebro" matemático
     model = joblib.load(model_filename)
-    print(f"--> ¡ÉXITO! Modelo '{model_filename}' cargado correctamente.")
+    print(f"--> SUCCESS! Model '{model_filename}' loaded successfully.")
 except FileNotFoundError:
-    print(f"--> ERROR CRÍTICO: No encuentro el archivo '{model_filename}'.")
-    print("    Asegúrate de que el archivo .pkl esté en la misma carpeta que app.py")
+    print(f"--> CRITICAL ERROR: File '{model_filename}' not found.")
+    print("    Ensure the .pkl file is in the same directory as app.py")
 
-# 2. Inicializar la Aplicación API
+# 2. Initialize the API Application
 app = FastAPI(title="Bank Marketing Prediction API", version="1.0")
 
 
-# 3. Definir el Dominio de Datos (Validation)
-# Esto actúa como un "filtro" estricto. Si envían texto en la edad, la API da error antes de molestar al modelo.
+# 3. Define Data Model (Input Validation)
+# We keep field names identical to the training dataset (e.g., 'age', 'job')
+# so the model can recognize them.
 class ClientData(BaseModel):
     age: int
     duration: int
@@ -38,31 +38,31 @@ class ClientData(BaseModel):
     poutcome: str
 
 
-# 4. El Endpoint (La función que se ejecutará al llamar a la API)
+# 4. Prediction Endpoint
 @app.post("/predict")
 def predict(data: ClientData):
     try:
-        # Convertimos el objeto recibido a un DataFrame (formato matriz)
-        # data.dict() convierte el input en un diccionario de Python
+        # Convert input data to a Pandas DataFrame
         input_df = pd.DataFrame([data.dict()])
 
-        # Hacemos la predicción
-        # [0] es porque predict devuelve un array, y queremos el primer elemento
+        # Make prediction
+        # [0] is used to get the first element of the array
         prediction = model.predict(input_df)[0]
 
-        # Probabilidad (Opcional, pero muy útil para Risk Scoring)
+        # Get probability (confidence score)
         probability = model.predict_proba(input_df)[0].tolist()
 
+        # Return response in JSON format
         return {
-            "prediccion_clase": int(prediction),
-            "resultado_texto": "SUSCRIBE" if prediction == 1 else "NO SUSCRIBE",
-            "probabilidad_confianza": probability
+            "prediction": int(prediction),
+            "outcome": "SUBSCRIBED" if prediction == 1 else "NOT_SUBSCRIBED",
+            "confidence_score": probability
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# 5. Endpoint de prueba (Health Check)
+# 5. Health Check Endpoint
 @app.get("/")
 def home():
-    return {"mensaje": "La API de Inteligencia Artificial está ONLINE"}
+    return {"message": "Bank Marketing AI API is ONLINE"}
