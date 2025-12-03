@@ -43,7 +43,8 @@ The API is deployed and accessible publicly. You can test the interactive docume
 ├── Dockerfile            # Instructions to build the Docker image
 ├── requirements.txt      # Python dependencies
 └── README.md             # Project documentation
-⚙️ How to Run Locally
+
+## How to Run Locally
 You can run this project on your local machine using Docker (recommended) or Python directly.
 
 Option A: Using Docker
@@ -64,7 +65,7 @@ pip install -r requirements.txt
 uvicorn app:app --reload
 Access the API at http://localhost:80/docs.
 
-📡 API Usage
+## API Usage
 Endpoint: POST /predict
 Receives client data and returns the prediction result.
 
